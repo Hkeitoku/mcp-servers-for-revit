@@ -1,0 +1,72 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!--
+	  Dynamo for Civil 3D 2026 向けビルド。
+	  親フォルダの DynamoBridge.cs / GraphOps.cs / DynamoMcpExtension.cs をそのまま共有し、
+	  参照先だけ Civil 3D 同梱の Dynamo Core 3.4.1 に差し替える。
+	  Dynamo Core の API 表面は 3.6.2 とほぼ同一 (反射確認済み) なので同一ソースでコンパイル可能。
+
+	  注意: Civil 3D 2026 の Dynamo Core は更新レベルで変わる —
+	    2026 初期 = 3.4.1 / 2026.1 = 3.5.2 / 2026.2 = 3.6.1。
+	  フォルダ名(3.4)で決め打ちせず、実行時に DynamoCore.dll の AssemblyName.Version を見て
+	  アダプタを選ぶこと。下の HintPath / パッケージパスは 2026 初期(3.4)向け。
+
+	  ビルド: cd DynamoMcpExtension/Civil3D && dotnet build -c Debug
+	  デプロイ先: %AppData%\Autodesk\C3D 2026\Dynamo\3.4\packages\DynamoMcpExtension\bin\
+	  ※ ソケット層 (Revit の RevitMCPPlugin 相当) は別途 AutoCAD .NET プラグインが必要。
+	    このプロジェクトは「拡張 = DynamoBridge」部分のみ。
+	-->
+
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<Nullable>disable</Nullable>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<AssemblyName>DynamoMcpExtension</AssemblyName>
+		<RootNamespace>DynamoMcpExtension</RootNamespace>
+		<PlatformTarget>x64</PlatformTarget>
+		<Platforms>x64</Platforms>
+		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+		<BaseOutputPath>bin\</BaseOutputPath>
+		<C3DDynamoCore>C:\Program Files\Autodesk\AutoCAD 2026\C3D\Dynamo\Core</C3DDynamoCore>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- 親フォルダの共有ソースだけを明示コンパイル -->
+		<Compile Include="..\DynamoBridge.cs" />
+		<Compile Include="..\GraphOps.cs" />
+		<Compile Include="..\DynamoMcpExtension.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="DynamoCore">
+			<HintPath>$(C3DDynamoCore)\DynamoCore.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="DynamoCoreWpf">
+			<HintPath>$(C3DDynamoCore)\DynamoCoreWpf.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="DynamoServices">
+			<HintPath>$(C3DDynamoCore)\DynamoServices.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="ProtoCore">
+			<HintPath>$(C3DDynamoCore)\ProtoCore.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Newtonsoft.Json">
+			<HintPath>C:\Program Files\Autodesk\AutoCAD 2026\Newtonsoft.Json.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+	</ItemGroup>
+
+	<!-- ビルド後、Civil 3D の Dynamo パッケージへ自動コピー -->
+	<Target Name="CopyToCivilDynamoPackage" AfterTargets="Build">
+		<Copy SourceFiles="$(OutputPath)DynamoMcpExtension.dll"
+			  DestinationFolder="$(AppData)\Autodesk\C3D 2026\Dynamo\3.4\packages\DynamoMcpExtension\bin\"
+			  SkipUnchangedFiles="true"
+			  ContinueOnError="true" />
+	</Target>
+
+</Project>

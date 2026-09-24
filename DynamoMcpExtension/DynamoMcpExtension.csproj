@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<Nullable>disable</Nullable>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<AssemblyName>DynamoMcpExtension</AssemblyName>
+		<RootNamespace>DynamoMcpExtension</RootNamespace>
+		<!-- 参照しているDynamoのDLLがすべて64bit専用のため、AnyCPUではなくx64を明示 -->
+		<PlatformTarget>x64</PlatformTarget>
+		<Platforms>x64</Platforms>
+	</PropertyGroup>
+
+	<!-- Civil3D/ は Dynamo 3.4.1 向けの別プロジェクト。ここ (Revit 3.6.2 側) の
+	     既定 glob から除外する。 -->
+	<ItemGroup>
+		<Compile Remove="Civil3D\**\*.cs" />
+		<None Remove="Civil3D\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- メニューボタン(MenuItem)を使うためDynamoCoreWpfへの参照を復活。
+         実機で確認済みのDynamo for Revit 2026のパス。
+         Revitのバージョンが変わったら年号部分を要修正。 -->
+		<Reference Include="DynamoCore">
+			<HintPath>C:\Program Files\Autodesk\Revit 2026\AddIns\DynamoForRevit\DynamoCore.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="DynamoCoreWpf">
+			<HintPath>C:\Program Files\Autodesk\Revit 2026\AddIns\DynamoForRevit\DynamoCoreWpf.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="DynamoServices">
+			<HintPath>C:\Program Files\Autodesk\Revit 2026\AddIns\DynamoForRevit\DynamoServices.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="ProtoCore">
+			<HintPath>C:\Program Files\Autodesk\Revit 2026\AddIns\DynamoForRevit\ProtoCore.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<!-- JSON パースに使用。Dynamo が既にプロセス内へ読み込む同一 DLL を参照し、
+		     二重ロード (send_code_to_revit / Nice3point で起きた種類の問題) を避ける。 -->
+		<Reference Include="Newtonsoft.Json">
+			<HintPath>C:\Program Files\Autodesk\Revit 2026\AddIns\DynamoForRevit\Newtonsoft.Json.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+	</ItemGroup>
+
+	<!-- DynamoBridge.cs / DynamoMcpExtension.cs は .NET SDKの既定挙動で
+       プロジェクトフォルダから自動的にコンパイル対象として拾われるため、
+       ここでの明示的な<Compile Include>は不要（重複エラーの原因になる）。 -->
+
+	<!-- ビルド後、DLLをDynamoパッケージのbinフォルダへ自動コピー(管理者権限不要)。 -->
+	<Target Name="CopyToDynamoPackage" AfterTargets="Build">
+		<ItemGroup>
+			<ExtensionFiles Include="$(OutputPath)DynamoMcpExtension.dll" />
+		</ItemGroup>
+		<Copy SourceFiles="@(ExtensionFiles)"
+			  DestinationFolder="$(AppData)\Dynamo\Dynamo Revit\3.6\packages\DynamoMcpExtension\bin\"
+			  SkipUnchangedFiles="true"
+			  ContinueOnError="true" />
+	</Target>
+
+</Project>

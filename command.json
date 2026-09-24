@@ -122,6 +122,16 @@
       "commandName": "create_dimensions",
       "description": "Create dimension annotations between elements or points in the current view",
       "assemblyPath": "RevitMCPCommandSet.dll"
+    },
+    {
+      "commandName": "dynamo_run_code",
+      "description": "Add a DesignScript code block node to the currently open Dynamo graph",
+      "assemblyPath": "RevitMCPCommandSet.dll"
+    },
+    {
+      "commandName": "dynamo_op",
+      "description": "Multi-node Dynamo graph operations: build_graph (nodes+edges), run, get_graph, get_node_value, clear, save",
+      "assemblyPath": "RevitMCPCommandSet.dll"
     }
   ]
 }
